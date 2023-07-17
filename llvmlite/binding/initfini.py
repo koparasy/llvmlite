@@ -34,7 +34,7 @@ def initialize_native_target():
     Initialize the native (host) target.  Necessary before doing any
     code generation.
     """
-    ffi.lib.LLVMPY_InitializeNativeTarget()
+    return 1
 
 
 def initialize_native_asmprinter():
