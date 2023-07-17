@@ -198,7 +198,7 @@ LLVMPY_CreateTargetMachine(LLVMTargetRef T, const char *Triple, const char *CPU,
             cm = CodeModel::Large;
     }
 
-    Optional<Reloc::Model> rm;
+    Reloc::Model rm;
     std::string rms(RelocModel);
     if (rms == "static")
         rm = Reloc::Static;

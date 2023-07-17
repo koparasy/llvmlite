@@ -5,7 +5,7 @@
 #include <iostream>
 
 // the following is needed for WriteGraph()
-#include "llvm/Analysis/CFGPrinter.h"
+#include "llvm/Analysis/DOTGraphTraitsPass.h"
 
 /* An iterator around a attribute list, including the stop condition */
 struct AttributeListIterator {
@@ -455,7 +455,7 @@ LLVMPY_WriteCFG(LLVMValueRef Fval, const char **OutStr, int ShowInst) {
     std::string buffer;
     raw_string_ostream stream(buffer);
     DOTFuncInfo CFGInfo(F, nullptr, nullptr, 0);
-    WriteGraph(stream, &CFGInfo, !ShowInst);
+    WriteGraph(stream, &CFGInfo, !ShowInst, F->getName());
     *OutStr = LLVMPY_CreateString(stream.str().c_str());
 }
 

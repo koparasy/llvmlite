@@ -15,7 +15,7 @@ extern "C" {
 INIT(Core)
 INIT(TransformUtils)
 INIT(ScalarOpts)
-INIT(ObjCARCOpts)
+//INIT(ObjCARCOpts)
 INIT(Vectorization)
 INIT(InstCombine)
 INIT(IPO)

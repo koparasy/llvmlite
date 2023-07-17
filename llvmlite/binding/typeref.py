@@ -73,15 +73,15 @@ class TypeRef(ffi.ObjectRef):
         """
         return _TypeListIterator(ffi.lib.LLVMPY_ElementIter(self))
 
-    @property
-    def element_type(self):
-        """
-        Returns the pointed-to type. When the type is not a pointer,
-        raises exception.
-        """
-        if not self.is_pointer:
-            raise ValueError("Type {} is not a pointer".format(self))
-        return TypeRef(ffi.lib.LLVMPY_GetElementType(self))
+#    @property
+#    def element_type(self):
+#        """
+#        Returns the pointed-to type. When the type is not a pointer,
+#        raises exception.
+#        """
+#        if not self.is_pointer:
+#            raise ValueError("Type {} is not a pointer".format(self))
+#        return TypeRef(ffi.lib.LLVMPY_GetElementType(self))
 
     @property
     def element_count(self):
@@ -151,8 +151,8 @@ class _TypeListIterator(_TypeIterator):
 ffi.lib.LLVMPY_PrintType.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_PrintType.restype = c_void_p
 
-ffi.lib.LLVMPY_GetElementType.argtypes = [ffi.LLVMTypeRef]
-ffi.lib.LLVMPY_GetElementType.restype = ffi.LLVMTypeRef
+#ffi.lib.LLVMPY_GetElementType.argtypes = [ffi.LLVMTypeRef]
+#ffi.lib.LLVMPY_GetElementType.restype = ffi.LLVMTypeRef
 
 ffi.lib.LLVMPY_TypeIsPointer.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_TypeIsPointer.restype = c_bool
