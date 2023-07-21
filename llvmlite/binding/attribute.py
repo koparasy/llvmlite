@@ -22,12 +22,12 @@ class AttributeRef(ffi.ObjectRef):
         return ffi.lib.LLVMPY_AttributeIsEnum(self)
 
     @property
-    def is_string(self):
-        return ffi.lib.LLVMPY_AttributeIsString(self)
+    def is_integer(self):
+        return ffi.lib.LLVMPY_AttributeIsInt(self)
 
     @property
-    def is_enum(self):
-        return ffi.lib.LLVMPY_GetEnumAttributeKind(self)
+    def is_string(self):
+        return ffi.lib.LLVMPY_AttributeIsString(self)
 
     def __str__(self):
         return ffi.ret_string(ffi.lib.LLVMPY_GetAttributeAsString(self))
