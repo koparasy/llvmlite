@@ -145,6 +145,9 @@ class ValueRef(ffi.ObjectRef):
 
     @property
     def is_memory_instruction(self):
+        if self._kind == 'function':
+            return True
+
         if self._kind != 'instruction':
             return False
 

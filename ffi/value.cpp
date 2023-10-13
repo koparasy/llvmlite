@@ -340,18 +340,22 @@ LLVMPY_GetOpcodeName(LLVMValueRef Val) {
 API_EXPORT(LLVMTypeRef)
 LLVMPY_TypeOfMemory(LLVMValueRef Val) {
   llvm::Value *unwrapped = llvm::unwrap(Val);
-  llvm::Instruction *inst = llvm::dyn_cast<llvm::Instruction>(unwrapped);
-  if (auto *SI = llvm::dyn_cast<llvm::StoreInst>(inst)){
-    return LLVMTypeRef(SI->getValueOperand()->getType());
-  }
-  else if ( auto *LI = llvm::dyn_cast<llvm::LoadInst>(inst)){
-    return LLVMTypeRef(LI->getType());
-  }
-  else if ( auto *GEP = llvm::dyn_cast<llvm::GetElementPtrInst>(inst)){
-    return LLVMTypeRef(GEP->getSourceElementType());
-  }
-  else if ( auto AC = llvm::dyn_cast<llvm::AllocaInst>(inst)){
-    return LLVMTypeRef(AC->getAllocatedType());
+  if ( auto *inst = llvm::dyn_cast<llvm::Instruction>(unwrapped)){
+    if (auto *SI = llvm::dyn_cast<llvm::StoreInst>(inst)){
+      return LLVMTypeRef(SI->getValueOperand()->getType());
+    }
+    else if ( auto *LI = llvm::dyn_cast<llvm::LoadInst>(inst)){
+      return LLVMTypeRef(LI->getType());
+    }
+    else if ( auto *GEP = llvm::dyn_cast<llvm::GetElementPtrInst>(inst)){
+      return LLVMTypeRef(GEP->getSourceElementType());
+    }
+    else if ( auto AC = llvm::dyn_cast<llvm::AllocaInst>(inst)){
+      return LLVMTypeRef(AC->getAllocatedType());
+    }
+  } else if ( auto *F = llvm::dyn_cast<llvm::Function>(unwrapped)){
+      llvm::dbgs() << "I am a function\n";
+      return LLVMTypeRef(F->getFunctionType());
   }
   return NULL;
 }
