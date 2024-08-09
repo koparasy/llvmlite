@@ -354,7 +354,6 @@ LLVMPY_TypeOfMemory(LLVMValueRef Val) {
       return LLVMTypeRef(AC->getAllocatedType());
     }
   } else if ( auto *F = llvm::dyn_cast<llvm::Function>(unwrapped)){
-      llvm::dbgs() << "I am a function\n";
       return LLVMTypeRef(F->getFunctionType());
   }
   return NULL;
