@@ -120,19 +120,21 @@ LLVMPY_OffsetOfElement(LLVMTargetDataRef TD, LLVMTypeRef Ty, int Element) {
 API_EXPORT(long long)
 LLVMPY_ABISizeOfElementType(LLVMTargetDataRef TD, LLVMTypeRef Ty) {
     llvm::Type *tp = llvm::unwrap(Ty);
-    if (!tp->isPointerTy())
-        return -1;
-    tp = tp->getPointerElementType();
-    return (long long)LLVMABISizeOfType(TD, llvm::wrap(tp));
+    return -1;
+    //    if (!tp->isPointerTy())
+    //        return -1;
+    //    tp = tp->getPointerElementType();
+    //    return (long long)LLVMABISizeOfType(TD, llvm::wrap(tp));
 }
 
 API_EXPORT(long long)
 LLVMPY_ABIAlignmentOfElementType(LLVMTargetDataRef TD, LLVMTypeRef Ty) {
     llvm::Type *tp = llvm::unwrap(Ty);
-    if (!tp->isPointerTy())
-        return -1;
-    tp = tp->getPointerElementType();
-    return (long long)LLVMABIAlignmentOfType(TD, llvm::wrap(tp));
+    return -1;
+    //    if (!tp->isPointerTy())
+    //        return -1;
+    //    tp = tp->getPointerElementType();
+    //    return (long long)LLVMABIAlignmentOfType(TD, llvm::wrap(tp));
 }
 
 API_EXPORT(LLVMTargetRef)
