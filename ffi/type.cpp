@@ -100,6 +100,19 @@ LLVMPY_TypeIsStruct(LLVMTypeRef type) {
     return llvm::unwrap(type)->isStructTy();
 }
 
+API_EXPORT(bool)
+LLVMPY_TypeIsOpaque(LLVMTypeRef type) {
+    llvm::Type *unwrapped = llvm::unwrap(type);
+    if (unwrapped->isOpaquePointerTy()) {
+        return true;
+    }
+    llvm::StructType *ty = llvm::dyn_cast<llvm::StructType>(unwrapped);
+    if (ty) {
+        return ty->isOpaque();
+    }
+    return false;
+}
+
 API_EXPORT(int)
 LLVMPY_GetTypeElementCount(LLVMTypeRef type) {
     llvm::Type *unwrapped = llvm::unwrap(type);
@@ -126,23 +139,33 @@ LLVMPY_GetTypeElementCount(LLVMTypeRef type) {
 }
 
 API_EXPORT(uint64_t)
-LLVMPY_GetTypeBitWidth(LLVMTypeRef type){
+LLVMPY_GetTypeBitWidth(LLVMTypeRef type) {
     llvm::Type *unwrapped = llvm::unwrap(type);
-    auto size= unwrapped->getPrimitiveSizeInBits();
+    auto size = unwrapped->getPrimitiveSizeInBits();
     return size.getFixedValue();
 }
 
-//API_EXPORT(LLVMTypeRef)
-//LLVMPY_GetElementType(LLVMTypeRef type) {
-//    llvm::Type *unwrapped = llvm::unwrap(type);
-//    llvm::PointerType *ty = llvm::dyn_cast<llvm::PointerType>(unwrapped);
-//    if (ty != nullptr) {
-//#if LLVM_VERSION_MAJOR < 14
-//        return llvm::wrap(ty->getElementType());
-//#else
-//        return llvm::wrap(ty->getPointerElementType());
-//#endif
-//    }
-//    return nullptr;
-//}
+// API_EXPORT(LLVMTypeRef)
+// LLVMPY_GetElementType(LLVMTypeRef type) {
+//     llvm::Type *unwrapped = llvm::unwrap(type);
+//     llvm::PointerType *ty = llvm::dyn_cast<llvm::PointerType>(unwrapped);
+//     if (ty != nullptr) {
+// #if LLVM_VERSION_MAJOR < 14
+//         return llvm::wrap(ty->getElementType());
+// #else
+//         return llvm::wrap(ty->getPointerElementType());
+// #endif
+//     }
+//     return nullptr;
+// }
+
+API_EXPORT(bool)
+LLVMPY_IsFunctionVararg(LLVMTypeRef type) {
+    llvm::Type *unwrapped = llvm::unwrap(type);
+    llvm::FunctionType *ty = llvm::dyn_cast<llvm::FunctionType>(unwrapped);
+    if (ty != nullptr) {
+        return ty->isVarArg();
+    }
+    return false;
+}
 }

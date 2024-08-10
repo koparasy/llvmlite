@@ -60,7 +60,8 @@ struct OperandsIterator {
 struct OpaqueOperandsIterator;
 typedef OpaqueOperandsIterator *LLVMOperandsIteratorRef;
 
-/* An iterator around a phi node's incoming blocks, including the stop condition */
+/* An iterator around a phi node's incoming blocks, including the stop condition
+ */
 struct IncomingBlocksIterator {
     typedef llvm::PHINode::const_block_iterator const_iterator;
     const_iterator cur;
@@ -72,6 +73,19 @@ struct IncomingBlocksIterator {
 
 struct OpaqueIncomingBlocksIterator;
 typedef OpaqueIncomingBlocksIterator *LLVMIncomingBlocksIteratorRef;
+
+/* An iterator around a instruction's operands, including the stop condition */
+struct IndicesIterator {
+    typedef const unsigned *const_iterator;
+    const_iterator cur;
+    const_iterator end;
+
+    IndicesIterator(const_iterator cur, const_iterator end)
+        : cur(cur), end(end) {}
+};
+
+struct OpaqueIndicesIterator;
+typedef OpaqueIndicesIterator *LLVMIndicesIteratorRef;
 
 namespace llvm {
 
@@ -115,6 +129,14 @@ static IncomingBlocksIterator *unwrap(LLVMIncomingBlocksIteratorRef GI) {
     return reinterpret_cast<IncomingBlocksIterator *>(GI);
 }
 
+static LLVMIndicesIteratorRef wrap(IndicesIterator *GI) {
+    return reinterpret_cast<LLVMIndicesIteratorRef>(GI);
+}
+
+static IndicesIterator *unwrap(LLVMIndicesIteratorRef GI) {
+    return reinterpret_cast<IndicesIterator *>(GI);
+}
+
 } // namespace llvm
 
 extern "C" {
@@ -141,17 +163,31 @@ LLVMPY_BlockInstructionsIter(LLVMValueRef B) {
 }
 
 API_EXPORT(LLVMOperandsIteratorRef)
-LLVMPY_InstructionOperandsIter(LLVMValueRef I) {
+LLVMPY_OperandsIter(LLVMValueRef I) {
     using namespace llvm;
-    Instruction *inst = unwrap<Instruction>(I);
-    return wrap(new OperandsIterator(inst->op_begin(), inst->op_end()));
+    User *user = unwrap<User>(I);
+    return wrap(new OperandsIterator(user->op_begin(), user->op_end()));
 }
 
 API_EXPORT(LLVMIncomingBlocksIteratorRef)
 LLVMPY_PhiIncomingBlocksIter(LLVMValueRef I) {
     using namespace llvm;
     PHINode *inst = unwrap<PHINode>(I);
-    return wrap(new IncomingBlocksIterator(inst->block_begin(), inst->block_end()));
+    return wrap(
+        new IncomingBlocksIterator(inst->block_begin(), inst->block_end()));
+}
+
+API_EXPORT(LLVMIndicesIteratorRef)
+LLVMPY_IndicesIter(LLVMValueRef I) {
+    if (llvm::InsertValueInst *CI =
+            llvm::dyn_cast<llvm::InsertValueInst>((llvm::Value *)I)) {
+        return llvm::wrap(new IndicesIterator(CI->idx_begin(), CI->idx_end()));
+    }
+    if (llvm::ExtractValueInst *CI =
+            llvm::dyn_cast<llvm::ExtractValueInst>((llvm::Value *)I)) {
+        return llvm::wrap(new IndicesIterator(CI->idx_begin(), CI->idx_end()));
+    }
+    return nullptr;
 }
 
 API_EXPORT(LLVMValueRef)
@@ -209,6 +245,17 @@ LLVMPY_IncomingBlocksIterNext(LLVMIncomingBlocksIteratorRef GI) {
     }
 }
 
+API_EXPORT(int64_t)
+LLVMPY_IndicesIterNext(LLVMIndicesIteratorRef GI) {
+    using namespace llvm;
+    IndicesIterator *iter = unwrap(GI);
+    if (iter->cur != iter->end) {
+        return *iter->cur++;
+    } else {
+        return int64_t(-1);
+    }
+}
+
 API_EXPORT(void)
 LLVMPY_DisposeBlocksIter(LLVMBlocksIteratorRef GI) { delete llvm::unwrap(GI); }
 
@@ -229,6 +276,11 @@ LLVMPY_DisposeOperandsIter(LLVMOperandsIteratorRef GI) {
 
 API_EXPORT(void)
 LLVMPY_DisposeIncomingBlocksIter(LLVMIncomingBlocksIteratorRef GI) {
+    delete llvm::unwrap(GI);
+}
+
+API_EXPORT(void)
+LLVMPY_DisposeIndicesIter(LLVMIndicesIteratorRef GI) {
     delete llvm::unwrap(GI);
 }
 
@@ -264,6 +316,64 @@ LLVMPY_GetConstantFPValue(LLVMValueRef Val, bool *losesInfo) {
         *losesInfo = losesInfo_internal;
     }
     return result;
+}
+
+API_EXPORT(const char *)
+LLVMPY_GetConstantDataAsString(LLVMValueRef Val) {
+    if (llvm::ConstantDataSequential *CI =
+            llvm::dyn_cast<llvm::ConstantDataSequential>((llvm::Value *)Val)) {
+        if (!CI->isString())
+            return nullptr;
+        auto str = CI->getAsString();
+        return LLVMPY_CreateByteString((const char *)str.bytes_begin(),
+                                       str.bytes_end() - str.bytes_begin());
+    }
+    return nullptr;
+}
+
+API_EXPORT(LLVMValueRef)
+LLVMPY_GetConstantSequenceElement(LLVMValueRef Val, unsigned i) {
+    if (llvm::ConstantDataSequential *CI =
+            llvm::dyn_cast<llvm::ConstantDataSequential>((llvm::Value *)Val)) {
+        return LLVMValueRef(CI->getElementAsConstant(i));
+    }
+    return nullptr;
+}
+
+API_EXPORT(size_t)
+LLVMPY_GetConstantSequenceNumElements(LLVMValueRef Val) {
+    if (llvm::ConstantDataSequential *CI =
+            llvm::dyn_cast<llvm::ConstantDataSequential>((llvm::Value *)Val)) {
+        return CI->getNumElements();
+    }
+    return 0;
+}
+
+API_EXPORT(bool)
+LLVMPY_HasInitializer(LLVMValueRef Val) {
+    if (llvm::GlobalVariable *CI =
+            llvm::dyn_cast<llvm::GlobalVariable>((llvm::Value *)Val)) {
+        return CI->hasInitializer();
+    }
+    return false;
+}
+
+API_EXPORT(LLVMValueRef)
+LLVMPY_GetInitializer(LLVMValueRef Val) {
+    if (llvm::GlobalVariable *CI =
+            llvm::dyn_cast<llvm::GlobalVariable>((llvm::Value *)Val)) {
+        return LLVMValueRef(CI->getInitializer());
+    }
+    return nullptr;
+}
+
+API_EXPORT(LLVMValueRef)
+LLVMPY_ConstantExprAsInstruction(LLVMValueRef Val) {
+    if (llvm::ConstantExpr *CI =
+            llvm::dyn_cast<llvm::ConstantExpr>((llvm::Value *)Val)) {
+        return LLVMValueRef(CI->getAsInstruction());
+    }
+    return nullptr;
 }
 
 API_EXPORT(int)
@@ -339,24 +449,21 @@ LLVMPY_GetOpcodeName(LLVMValueRef Val) {
 
 API_EXPORT(LLVMTypeRef)
 LLVMPY_TypeOfMemory(LLVMValueRef Val) {
-  llvm::Value *unwrapped = llvm::unwrap(Val);
-  if ( auto *inst = llvm::dyn_cast<llvm::Instruction>(unwrapped)){
-    if (auto *SI = llvm::dyn_cast<llvm::StoreInst>(inst)){
-      return LLVMTypeRef(SI->getValueOperand()->getType());
+    llvm::Value *unwrapped = llvm::unwrap(Val);
+    if (auto *inst = llvm::dyn_cast<llvm::Instruction>(unwrapped)) {
+        if (auto *SI = llvm::dyn_cast<llvm::StoreInst>(inst)) {
+            return LLVMTypeRef(SI->getValueOperand()->getType());
+        } else if (auto *LI = llvm::dyn_cast<llvm::LoadInst>(inst)) {
+            return LLVMTypeRef(LI->getType());
+        } else if (auto *GEP = llvm::dyn_cast<llvm::GetElementPtrInst>(inst)) {
+            return LLVMTypeRef(GEP->getSourceElementType());
+        } else if (auto AC = llvm::dyn_cast<llvm::AllocaInst>(inst)) {
+            return LLVMTypeRef(AC->getAllocatedType());
+        }
+    } else if (auto *F = llvm::dyn_cast<llvm::Function>(unwrapped)) {
+        return LLVMTypeRef(F->getFunctionType());
     }
-    else if ( auto *LI = llvm::dyn_cast<llvm::LoadInst>(inst)){
-      return LLVMTypeRef(LI->getType());
-    }
-    else if ( auto *GEP = llvm::dyn_cast<llvm::GetElementPtrInst>(inst)){
-      return LLVMTypeRef(GEP->getSourceElementType());
-    }
-    else if ( auto AC = llvm::dyn_cast<llvm::AllocaInst>(inst)){
-      return LLVMTypeRef(AC->getAllocatedType());
-    }
-  } else if ( auto *F = llvm::dyn_cast<llvm::Function>(unwrapped)){
-      return LLVMTypeRef(F->getFunctionType());
-  }
-  return NULL;
+    return NULL;
 }
 
 } // end extern "C"

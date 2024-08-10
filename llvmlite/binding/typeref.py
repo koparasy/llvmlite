@@ -28,6 +28,7 @@ class TypeKind(enum.IntEnum):
     bfloat = 18
     x86_amx = 19
 
+
 class TypeRef(ffi.ObjectRef):
     """A weak reference to a LLVM type
     """
@@ -41,7 +42,7 @@ class TypeRef(ffi.ObjectRef):
     @property
     def is_struct(self):
         """
-        Returns true is the type is a struct type.
+        Returns true if the type is a struct type.
         """
         return ffi.lib.LLVMPY_TypeIsStruct(self)
 
@@ -65,6 +66,13 @@ class TypeRef(ffi.ObjectRef):
         Returns true is the type is a vector type.
         """
         return ffi.lib.LLVMPY_TypeIsVector(self)
+
+    @property
+    def is_opaque(self):
+        """
+        Returns true is the type is an opaque data type or pointer.
+        """
+        return ffi.lib.LLVMPY_TypeIsOpaque(self)
 
     @property
     def elements(self):
@@ -118,6 +126,12 @@ class TypeRef(ffi.ObjectRef):
         """
         return TypeKind(ffi.lib.LLVMPY_GetTypeKind(self))
 
+    @property
+    def is_function_vararg(self):
+        if self.type_kind != TypeKind.function:
+            raise ValueError('expected function, got %s' % self.type_kind)
+        return ffi.lib.LLVMPY_IsFunctionVararg(self)
+
     def __str__(self):
         return ffi.ret_string(ffi.lib.LLVMPY_PrintType(self))
 
@@ -166,6 +180,9 @@ ffi.lib.LLVMPY_TypeIsVector.restype = c_bool
 ffi.lib.LLVMPY_TypeIsStruct.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_TypeIsStruct.restype = c_bool
 
+ffi.lib.LLVMPY_TypeIsOpaque.argtypes = [ffi.LLVMTypeRef]
+ffi.lib.LLVMPY_TypeIsOpaque.restype = c_bool
+
 ffi.lib.LLVMPY_GetTypeKind.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_GetTypeKind.restype = c_int
 
@@ -174,6 +191,9 @@ ffi.lib.LLVMPY_GetTypeElementCount.restype = c_int
 
 ffi.lib.LLVMPY_GetTypeBitWidth.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_GetTypeBitWidth.restype = c_uint64
+
+ffi.lib.LLVMPY_IsFunctionVararg.argtypes = [ffi.LLVMTypeRef]
+ffi.lib.LLVMPY_IsFunctionVararg.restype = c_bool
 
 ffi.lib.LLVMPY_ElementIter.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_ElementIter.restype = ffi.LLVMElementIterator

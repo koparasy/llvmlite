@@ -35,10 +35,15 @@ LLVMArgumentsIterator = _make_opaque_ref("LLVMArgumentsIterator")
 LLVMInstructionsIterator = _make_opaque_ref("LLVMInstructionsIterator")
 LLVMOperandsIterator = _make_opaque_ref("LLVMOperandsIterator")
 LLVMIncomingBlocksIterator = _make_opaque_ref("LLVMIncomingBlocksIterator")
+LLVMIndicesIterator = _make_opaque_ref("LLVMIndicesIterator")
 LLVMTypesIterator = _make_opaque_ref("LLVMTypesIterator")
+LLVMAliasesIterator = _make_opaque_ref("LLVMAliasesIterator")
+LLVMIFuncsIterator = _make_opaque_ref("LLVMIFuncsIterator")
 LLVMObjectCacheRef = _make_opaque_ref("LLVMObjectCache")
 LLVMObjectFileRef = _make_opaque_ref("LLVMObjectFile")
 LLVMSectionIteratorRef = _make_opaque_ref("LLVMSectionIterator")
+LLVMOrcLLJITRef = _make_opaque_ref("LLVMOrcLLJITRef")
+LLVMOrcDylibTrackerRef = _make_opaque_ref("LLVMOrcDylibTrackerRef")
 
 
 class _LLVMLock:

@@ -1,7 +1,13 @@
 #include "core.h"
+#include "llvm-c/Core.h"
 #include "llvm-c/Target.h"
 #include "llvm-c/Transforms/PassManagerBuilder.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include <llvm-c/Types.h>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/Support/ErrorHandling.h>
+#include <llvm/Transforms/Utils/CodeExtractor.h>
 
 extern "C" {
 
