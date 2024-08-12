@@ -34,6 +34,7 @@ LLVMBlocksIterator = _make_opaque_ref("LLVMBlocksIterator")
 LLVMArgumentsIterator = _make_opaque_ref("LLVMArgumentsIterator")
 LLVMInstructionsIterator = _make_opaque_ref("LLVMInstructionsIterator")
 LLVMOperandsIterator = _make_opaque_ref("LLVMOperandsIterator")
+LLVMConstantDataIterator = _make_opaque_ref("LLVMConstantDataIterator")
 LLVMIncomingBlocksIterator = _make_opaque_ref("LLVMIncomingBlocksIterator")
 LLVMIndicesIterator = _make_opaque_ref("LLVMIndicesIterator")
 LLVMTypesIterator = _make_opaque_ref("LLVMTypesIterator")
@@ -55,6 +56,7 @@ class _LLVMLock:
     Also, callbacks can be attached so that every time the lock is acquired
     and released the corresponding callbacks will be invoked.
     """
+
     def __init__(self):
         # The reentrant lock is needed for callbacks that re-enter
         # the Python interpreter.
@@ -69,8 +71,7 @@ class _LLVMLock:
         self._cblist.append((acq_fn, rel_fn))
 
     def unregister(self, acq_fn, rel_fn):
-        """Remove the registered callbacks.
-        """
+        """Remove the registered callbacks."""
         self._cblist.remove((acq_fn, rel_fn))
 
     def __enter__(self):
@@ -92,7 +93,8 @@ class _lib_wrapper(object):
 
     This class duck-types a CDLL.
     """
-    __slots__ = ['_lib', '_fntab', '_lock']
+
+    __slots__ = ["_lib", "_fntab", "_lock"]
 
     def __init__(self, lib):
         self._lib = lib
@@ -133,7 +135,8 @@ class _lib_fn_wrapper(object):
     TODO: we can add methods to mark the function as threadsafe
           and remove the locking-step on call when marked.
     """
-    __slots__ = ['_lock', '_cfn']
+
+    __slots__ = ["_lock", "_cfn"]
 
     def __init__(self, lock, cfn):
         self._lock = lock
@@ -170,13 +173,13 @@ def _importlib_resources_path_repl(package, resource):
     The `_common.normalize_path(resource)` call is skipped because it is an
     internal API and it is unnecessary for the use here. What it does is
     ensuring `resource` is a str and that it does not contain path separators.
-    """ # noqa E501
+    """  # noqa E501
     return _impres.as_file(_impres.files(package) / resource)
 
 
-_importlib_resources_path = (_importlib_resources_path_repl
-                             if sys.version_info[:2] >= (3, 9)
-                             else _impres.path)
+_importlib_resources_path = (
+    _importlib_resources_path_repl if sys.version_info[:2] >= (3, 9) else _impres.path
+)
 
 
 _lib_name = get_library_name()
@@ -222,6 +225,7 @@ class OutputString(object):
     """
     Object for managing the char* output of LLVM APIs.
     """
+
     _as_parameter_ = _DeadPointer()
 
     @classmethod
@@ -275,21 +279,18 @@ class OutputString(object):
 
     @property
     def bytes(self):
-        """Get the raw bytes of content of the char pointer.
-        """
+        """Get the raw bytes of content of the char pointer."""
         return self._ptr.value
 
 
 def ret_string(ptr):
-    """To wrap string return-value from C-API.
-    """
+    """To wrap string return-value from C-API."""
     if ptr is not None:
         return str(OutputString.from_return(ptr))
 
 
 def ret_bytes(ptr):
-    """To wrap bytes return-value from C-API.
-    """
+    """To wrap bytes return-value from C-API."""
     if ptr is not None:
         return OutputString.from_return(ptr).bytes
 
@@ -298,6 +299,7 @@ class ObjectRef(object):
     """
     A wrapper around a ctypes pointer to a LLVM object ("resource").
     """
+
     _closed = False
     _as_parameter_ = _DeadPointer()
     # Whether this object pointer is owned by another one.
@@ -364,8 +366,7 @@ class ObjectRef(object):
     def __eq__(self, other):
         if not hasattr(other, "_ptr"):
             return False
-        return ctypes.addressof(self._ptr[0]) == \
-            ctypes.addressof(other._ptr[0])
+        return ctypes.addressof(self._ptr[0]) == ctypes.addressof(other._ptr[0])
 
     __nonzero__ = __bool__
 

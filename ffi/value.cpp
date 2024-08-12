@@ -1,5 +1,7 @@
 #include "core.h"
 #include "llvm-c/Core.h"
+#include <llvm/IR/Constant.h>
+#include <llvm/IR/Constants.h>
 #include <string>
 
 #include <iostream>
@@ -59,6 +61,18 @@ struct OperandsIterator {
 
 struct OpaqueOperandsIterator;
 typedef OpaqueOperandsIterator *LLVMOperandsIteratorRef;
+
+struct ConstantDataIterator {
+    llvm::ConstantDataSequential *DS;
+    int current_index = 0;
+    int last_index = -1;
+
+    ConstantDataIterator(llvm::ConstantDataSequential *data)
+        : DS(data), current_index(0), last_index(DS->getNumElements()) {}
+};
+
+struct ConstantDataIterator;
+typedef ConstantDataIterator *LLVMConstantDataIteratorRef;
 
 /* An iterator around a phi node's incoming blocks, including the stop condition
  */
@@ -121,6 +135,14 @@ static OperandsIterator *unwrap(LLVMOperandsIteratorRef GI) {
     return reinterpret_cast<OperandsIterator *>(GI);
 }
 
+static LLVMConstantDataIteratorRef wrap(ConstantDataIterator *CDI) {
+    return reinterpret_cast<LLVMConstantDataIteratorRef>(CDI);
+}
+
+static ConstantDataIterator *unwrap(LLVMConstantDataIteratorRef CDI) {
+    return reinterpret_cast<ConstantDataIterator *>(CDI);
+}
+
 static LLVMIncomingBlocksIteratorRef wrap(IncomingBlocksIterator *GI) {
     return reinterpret_cast<LLVMIncomingBlocksIteratorRef>(GI);
 }
@@ -167,6 +189,18 @@ LLVMPY_OperandsIter(LLVMValueRef I) {
     using namespace llvm;
     User *user = unwrap<User>(I);
     return wrap(new OperandsIterator(user->op_begin(), user->op_end()));
+}
+
+API_EXPORT(LLVMConstantDataIteratorRef)
+LLVMPY_ConstantDataIter(LLVMValueRef I) {
+    using namespace llvm;
+    Value *val = unwrap<Value>(I);
+    if (llvm::ConstantDataSequential *cds =
+            llvm::dyn_cast<llvm::ConstantDataSequential>(val)) {
+        // You can safely use cds as a ConstantDataSequential
+        return wrap(new ConstantDataIterator(cds));
+    }
+    return nullptr;
 }
 
 API_EXPORT(LLVMIncomingBlocksIteratorRef)
@@ -235,6 +269,16 @@ LLVMPY_OperandsIterNext(LLVMOperandsIteratorRef GI) {
 }
 
 API_EXPORT(LLVMValueRef)
+LLVMPY_ConstantDataIterNext(LLVMConstantDataIteratorRef CDI) {
+    using namespace llvm;
+    ConstantDataIterator *iter = unwrap(CDI);
+    if (iter->current_index == iter->last_index)
+        return NULL;
+    return wrap(static_cast<const Value *>(
+        iter->DS->getElementAsConstant(iter->current_index++)));
+}
+
+API_EXPORT(LLVMValueRef)
 LLVMPY_IncomingBlocksIterNext(LLVMIncomingBlocksIteratorRef GI) {
     using namespace llvm;
     IncomingBlocksIterator *iter = unwrap(GI);
@@ -272,6 +316,11 @@ LLVMPY_DisposeInstructionsIter(LLVMInstructionsIteratorRef GI) {
 API_EXPORT(void)
 LLVMPY_DisposeOperandsIter(LLVMOperandsIteratorRef GI) {
     delete llvm::unwrap(GI);
+}
+
+API_EXPORT(void)
+LLVMPY_DisposeConstantDataIter(LLVMConstantDataIteratorRef DGI) {
+    delete llvm::unwrap(DGI);
 }
 
 API_EXPORT(void)

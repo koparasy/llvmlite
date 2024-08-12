@@ -195,9 +195,7 @@ class ValueRef(ffi.ObjectRef):
             ValueKind.function,
         ):
             return Linkage(ffi.lib.LLVMPY_GetLinkage(self))
-        raise TypeError(
-            f"expected global value, got {self}." f"ValueKind is {self.value_kind.name}"
-        )
+        raise TypeError(f"expected global value, got {self}." f"ValueKind is {self.value_kind.name}")
 
     @linkage.setter
     def linkage(self, value):
@@ -236,9 +234,7 @@ class ValueRef(ffi.ObjectRef):
         if not self.is_function:
             raise ValueError("expected function value, got %s" % (self._kind,))
         attrname = str(attr)
-        attrval = ffi.lib.LLVMPY_GetEnumAttributeKindForName(
-            _encode_string(attrname), len(attrname)
-        )
+        attrval = ffi.lib.LLVMPY_GetEnumAttributeKindForName(_encode_string(attrname), len(attrname))
         if attrval == 0:
             raise ValueError("no such attribute {!r}".format(attrname))
         ffi.lib.LLVMPY_AddFunctionAttr(self, attrval)
@@ -247,9 +243,7 @@ class ValueRef(ffi.ObjectRef):
         if not self.is_function:
             raise ValueError("expected function value, got %s" % (self._kind,))
 
-        ffi.lib.LLVMPY_AddFunctionKeyValueAttr(
-            self, _encode_string(key), len(key), _encode_string(value), len(value)
-        )
+        ffi.lib.LLVMPY_AddFunctionKeyValueAttr(self, _encode_string(key), len(key), _encode_string(value), len(value))
 
     @property
     def type(self):
@@ -265,9 +259,7 @@ class ValueRef(ffi.ObjectRef):
         The memory type accessed by this instruction LLVM type.
         """
         if not self.is_memory_instruction:
-            raise ValueError(
-                "Argument is not  amemory instruciton {!r}".format(str(self))
-            )
+            raise ValueError("Argument is not  amemory instruciton {!r}".format(str(self)))
 
         return TypeRef(ffi.lib.LLVMPY_TypeOfMemory(self))
 
@@ -289,9 +281,7 @@ class ValueRef(ffi.ObjectRef):
             raise ValueError("expected global value, got %s" % (self._kind))
         if not self.has_initializer:
             return None
-        return ValueRef(
-            ffi.lib.LLVMPY_GetInitializer(self), "initializer", self._parents
-        )
+        return ValueRef(ffi.lib.LLVMPY_GetInitializer(self), "initializer", self._parents)
 
     @property
     def is_declaration(self):
@@ -300,9 +290,7 @@ class ValueRef(ffi.ObjectRef):
         module.
         """
         if not (self.is_global or self.is_function):
-            raise ValueError(
-                "expected global or function value, got %s" % (self._kind,)
-            )
+            raise ValueError("expected global or function value, got %s" % (self._kind,))
         return ffi.lib.LLVMPY_IsDeclaration(self)
 
     @property
@@ -358,21 +346,31 @@ class ValueRef(ffi.ObjectRef):
         Return an iterator over this instruction's operands.
         The iterator will yield a ValueRef for each operand.
         """
-        if not self.is_instruction and self.value_kind not in (
+        if self.value_kind not in (
             ValueKind.constant_array,
             ValueKind.constant_vector,
             ValueKind.constant_struct,
+            ValueKind.constant_data_array,
             ValueKind.global_alias,
             ValueKind.constant_expr,
+            ValueKind.instruction,
         ):
             raise ValueError(
                 "expected instruction value, constant aggregate, or global."
-                " Got %s" % (self._kind,)
+                " Got %s %s" % (self._kind, self.value_kind.name)
             )
+
+        if self.value_kind in (ValueKind.constant_data_array, ValueKind.constant_data_vector, ValueKind.constant_aggregate_zero):
+            it = ffi.lib.LLVMPY_ConstantDataIter(self)
+            parents = self._parents.copy()
+            parents.update(instruction=self)
+            return _ConstantDataIterator(it, parents)
+
         it = ffi.lib.LLVMPY_OperandsIter(self)
         parents = self._parents.copy()
         parents.update(instruction=self)
         return _OperandsIterator(it, parents)
+
 
     @property
     def opcode(self):
@@ -395,9 +393,7 @@ class ValueRef(ffi.ObjectRef):
             "insertvalue",
             "extractvalue",
         ):
-            raise ValueError(
-                "expected insert/extractvalue value, got %s" % (self._kind,)
-            )
+            raise ValueError("expected insert/extractvalue value, got %s" % (self._kind,))
         it = ffi.lib.LLVMPY_IndicesIter(self)
         parents = self._parents.copy()
         parents.update(instruction=self)
@@ -436,10 +432,7 @@ class ValueRef(ffi.ObjectRef):
             accuracy_loss = c_bool(False)
             value = ffi.lib.LLVMPY_GetConstantFPValue(self, byref(accuracy_loss))
             if accuracy_loss.value and not round_fp:
-                raise ValueError(
-                    "Accuracy loss encountered in conversion of constant "
-                    f"value {str(self)}"
-                )
+                raise ValueError("Accuracy loss encountered in conversion of constant " f"value {str(self)}")
 
             return value
         elif self.value_kind == ValueKind.constant_expr:
@@ -485,9 +478,7 @@ class ValueRef(ffi.ObjectRef):
         """
         if self.value_kind != ValueKind.constant_expr:
             raise ValueError("expected constant expr, got %s" % (self.value_kind))
-        return ValueRef(
-            ffi.lib.LLVMPY_ConstantExprAsInstruction(self), "instruction", self._parents
-        )
+        return ValueRef(ffi.lib.LLVMPY_ConstantExprAsInstruction(self), "instruction", self._parents)
 
 
 class _ValueIterator(ffi.ObjectRef):
@@ -500,9 +491,7 @@ class _ValueIterator(ffi.ObjectRef):
         # Keep parent objects (module, function, etc) alive
         self._parents = parents
         if self.kind is None:
-            raise NotImplementedError(
-                "%s must specify kind attribute" % (type(self).__name__,)
-            )
+            raise NotImplementedError("%s must specify kind attribute" % (type(self).__name__,))
 
     def __next__(self):
         vp = self._next()
@@ -555,6 +544,15 @@ class _OperandsIterator(_ValueIterator):
 
     def _next(self):
         return ffi.lib.LLVMPY_OperandsIterNext(self)
+
+class _ConstantDataIterator(_ValueIterator):
+    kind = "operand"
+
+    def _dispose(self):
+        self._capi.LLVMPY_DisposeConstantDataIter(self)
+
+    def _next(self):
+        return ffi.lib.LLVMPY_ConstantDataIterNext(self)
 
 
 class _IncomingBlocksIterator(_ValueIterator):
@@ -642,6 +640,9 @@ ffi.lib.LLVMPY_BlockInstructionsIter.restype = ffi.LLVMInstructionsIterator
 ffi.lib.LLVMPY_OperandsIter.argtypes = [ffi.LLVMValueRef]
 ffi.lib.LLVMPY_OperandsIter.restype = ffi.LLVMOperandsIterator
 
+ffi.lib.LLVMPY_ConstantDataIter.argtypes = [ffi.LLVMValueRef]
+ffi.lib.LLVMPY_ConstantDataIter.restype = ffi.LLVMConstantDataIterator
+
 ffi.lib.LLVMPY_PhiIncomingBlocksIter.argtypes = [ffi.LLVMValueRef]
 ffi.lib.LLVMPY_PhiIncomingBlocksIter.restype = ffi.LLVMIncomingBlocksIterator
 
@@ -653,6 +654,8 @@ ffi.lib.LLVMPY_DisposeBlocksIter.argtypes = [ffi.LLVMBlocksIterator]
 ffi.lib.LLVMPY_DisposeInstructionsIter.argtypes = [ffi.LLVMInstructionsIterator]
 
 ffi.lib.LLVMPY_DisposeOperandsIter.argtypes = [ffi.LLVMOperandsIterator]
+
+ffi.lib.LLVMPY_DisposeConstantDataIter.argtypes = [ffi.LLVMConstantDataIterator]
 
 ffi.lib.LLVMPY_DisposeIncomingBlocksIter.argtypes = [ffi.LLVMIncomingBlocksIterator]
 
@@ -669,6 +672,9 @@ ffi.lib.LLVMPY_InstructionsIterNext.restype = ffi.LLVMValueRef
 
 ffi.lib.LLVMPY_OperandsIterNext.argtypes = [ffi.LLVMOperandsIterator]
 ffi.lib.LLVMPY_OperandsIterNext.restype = ffi.LLVMValueRef
+
+ffi.lib.LLVMPY_ConstantDataIterNext.argtypes = [ffi.LLVMConstantDataIterator]
+ffi.lib.LLVMPY_ConstantDataIterNext.restype = ffi.LLVMValueRef
 
 ffi.lib.LLVMPY_IncomingBlocksIterNext.argtypes = [ffi.LLVMIncomingBlocksIterator]
 ffi.lib.LLVMPY_IncomingBlocksIterNext.restype = ffi.LLVMValueRef
@@ -712,5 +718,5 @@ ffi.lib.LLVMPY_GetConstantSequenceElement.restype = ffi.LLVMValueRef
 ffi.lib.LLVMPY_GetConstantSequenceNumElements.argtypes = [ffi.LLVMValueRef]
 ffi.lib.LLVMPY_GetConstantSequenceNumElements.restype = c_size_t
 
-#ffi.lib.LLVMPY_ExtractBasicBlock.argtypes = [ffi.LLVMValueRef, ffi.LLVMValueRef]
-#ffi.lib.LLVMPY_ExtractBasicBlock.restype = ffi.LLVMValueRef
+# ffi.lib.LLVMPY_ExtractBasicBlock.argtypes = [ffi.LLVMValueRef, ffi.LLVMValueRef]
+# ffi.lib.LLVMPY_ExtractBasicBlock.restype = ffi.LLVMValueRef
