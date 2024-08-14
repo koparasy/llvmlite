@@ -156,6 +156,11 @@ class ValueRef(ffi.ObjectRef):
         return self._kind == "instruction"
 
     @property
+    def alignment(self):
+        """The alignment property."""
+        return ffi.lib.LLVMPY_GetAlignment(self)
+
+    @property
     def is_memory_instruction(self):
         if self._kind != "instruction":
             return False
@@ -360,7 +365,11 @@ class ValueRef(ffi.ObjectRef):
                 " Got %s %s" % (self._kind, self.value_kind.name)
             )
 
-        if self.value_kind in (ValueKind.constant_data_array, ValueKind.constant_data_vector, ValueKind.constant_aggregate_zero):
+        if self.value_kind in (
+            ValueKind.constant_data_array,
+            ValueKind.constant_data_vector,
+            ValueKind.constant_aggregate_zero,
+        ):
             it = ffi.lib.LLVMPY_ConstantDataIter(self)
             parents = self._parents.copy()
             parents.update(instruction=self)
@@ -370,7 +379,6 @@ class ValueRef(ffi.ObjectRef):
         parents = self._parents.copy()
         parents.update(instruction=self)
         return _OperandsIterator(it, parents)
-
 
     @property
     def opcode(self):
@@ -545,6 +553,7 @@ class _OperandsIterator(_ValueIterator):
     def _next(self):
         return ffi.lib.LLVMPY_OperandsIterNext(self)
 
+
 class _ConstantDataIterator(_ValueIterator):
     kind = "operand"
 
@@ -696,6 +705,9 @@ ffi.lib.LLVMPY_GetConstantIntRawValue.restype = POINTER(c_uint64)
 
 ffi.lib.LLVMPY_GetConstantIntNumWords.argtypes = [ffi.LLVMValueRef]
 ffi.lib.LLVMPY_GetConstantIntNumWords.restype = c_uint
+
+ffi.lib.LLVMPY_GetAlignment.argtypes = [ffi.LLVMValueRef]
+ffi.lib.LLVMPY_GetAlignment.restype = c_uint64
 
 ffi.lib.LLVMPY_GetConstantFPValue.argtypes = [ffi.LLVMValueRef, POINTER(c_bool)]
 ffi.lib.LLVMPY_GetConstantFPValue.restype = c_double

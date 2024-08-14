@@ -1,5 +1,7 @@
 #include "core.h"
 #include "llvm-c/Core.h"
+#include <cstdint>
+#include <llvm-c/Types.h>
 #include <llvm/IR/Constant.h>
 #include <llvm/IR/Constants.h>
 #include <string>
@@ -354,6 +356,21 @@ LLVMPY_GetConstantIntNumWords(LLVMValueRef Val) {
             llvm::dyn_cast<llvm::ConstantInt>((llvm::Value *)Val)) {
         return CI->getValue().getNumWords();
     }
+    return 0;
+}
+
+API_EXPORT(uint64_t)
+LLVMPY_GetAlignment(LLVMValueRef Val) {
+    llvm::Value *unwrapped = llvm::unwrap(Val);
+    llvm::Instruction *inst = llvm::dyn_cast<llvm::Instruction>(unwrapped);
+    if (auto *loadInst = llvm::dyn_cast<llvm::LoadInst>(inst)) {
+        return loadInst->getAlign().value();
+    } else if (auto *storeInst = llvm::dyn_cast<llvm::StoreInst>(inst)) {
+        return storeInst->getAlign().value();
+    } else if (auto *allocaInst = llvm::dyn_cast<llvm::AllocaInst>(inst)) {
+        return allocaInst->getAlign().value();
+    }
+
     return 0;
 }
 
