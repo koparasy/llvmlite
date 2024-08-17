@@ -256,7 +256,7 @@ class ValueRef(ffi.ObjectRef):
         This value's LLVM type.
         """
         # XXX what does this return?
-        return TypeRef(ffi.lib.LLVMPY_TypeOf(self))
+        return TypeRef(ffi.lib.LLVMPY_TypeOf(self), self.module)
 
     @property
     def memory_type(self):
@@ -266,7 +266,7 @@ class ValueRef(ffi.ObjectRef):
         if not self.is_memory_instruction:
             raise ValueError("Argument is not  amemory instruciton {!r}".format(str(self)))
 
-        return TypeRef(ffi.lib.LLVMPY_TypeOfMemory(self))
+        return TypeRef(ffi.lib.LLVMPY_TypeOfMemory(self), self.module)
 
     @property
     def has_initializer(self):
@@ -356,9 +356,13 @@ class ValueRef(ffi.ObjectRef):
             ValueKind.constant_vector,
             ValueKind.constant_struct,
             ValueKind.constant_data_array,
+            ValueKind.constant_data_vector,
             ValueKind.global_alias,
             ValueKind.constant_expr,
             ValueKind.instruction,
+            ValueKind.global_variable,
+            ValueKind.constant_aggregate_zero,
+            ValueKind.undef_value,
         ):
             raise ValueError(
                 "expected instruction value, constant aggregate, or global."
@@ -368,7 +372,6 @@ class ValueRef(ffi.ObjectRef):
         if self.value_kind in (
             ValueKind.constant_data_array,
             ValueKind.constant_data_vector,
-            ValueKind.constant_aggregate_zero,
         ):
             it = ffi.lib.LLVMPY_ConstantDataIter(self)
             parents = self._parents.copy()

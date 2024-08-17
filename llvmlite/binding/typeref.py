@@ -30,8 +30,12 @@ class TypeKind(enum.IntEnum):
 
 
 class TypeRef(ffi.ObjectRef):
-    """A weak reference to a LLVM type
-    """
+    """A weak reference to a LLVM type"""
+
+    def __init__(self, obj, mod):
+        super().__init__(obj)
+        self._module = mod
+
     @property
     def name(self):
         """
@@ -42,7 +46,7 @@ class TypeRef(ffi.ObjectRef):
     @property
     def is_struct(self):
         """
-        Returns true if the type is a struct type.
+        Returns true is the type is a struct type.
         """
         return ffi.lib.LLVMPY_TypeIsStruct(self)
 
@@ -68,28 +72,21 @@ class TypeRef(ffi.ObjectRef):
         return ffi.lib.LLVMPY_TypeIsVector(self)
 
     @property
-    def is_opaque(self):
-        """
-        Returns true is the type is an opaque data type or pointer.
-        """
-        return ffi.lib.LLVMPY_TypeIsOpaque(self)
-
-    @property
     def elements(self):
         """
         Returns iterator over enclosing types
         """
-        return _TypeListIterator(ffi.lib.LLVMPY_ElementIter(self))
+        return _TypeListIterator(ffi.lib.LLVMPY_ElementIter(self), self._module)
 
-#    @property
-#    def element_type(self):
-#        """
-#        Returns the pointed-to type. When the type is not a pointer,
-#        raises exception.
-#        """
-#        if not self.is_pointer:
-#            raise ValueError("Type {} is not a pointer".format(self))
-#        return TypeRef(ffi.lib.LLVMPY_GetElementType(self))
+    #    @property
+    #    def element_type(self):
+    #        """
+    #        Returns the pointed-to type. When the type is not a pointer,
+    #        raises exception.
+    #        """
+    #        if not self.is_pointer:
+    #            raise ValueError("Type {} is not a pointer".format(self))
+    #        return TypeRef(ffi.lib.LLVMPY_GetElementType(self))
 
     @property
     def element_count(self):
@@ -120,28 +117,69 @@ class TypeRef(ffi.ObjectRef):
         return ffi.lib.LLVMPY_GetTypeBitWidth(self)
 
     @property
+    def system_type_width(self):
+        """
+        Return the basic size of this type if it is a primitive type. These is
+        target-dependent.
+        This will return zero if the type does not have a size or is not a
+        primitive type.
+
+        If this is a scalable vector type, the scalable property will be set and
+        the runtime size will be a positive integer multiple of the base size.
+
+        Note that this may not reflect the size of memory allocated for an
+        instance of the type or the number of bytes that are written when an
+        instance of the type is stored to memory.
+        """
+        return ffi.lib.LLVMPY_GetDLTypeBitWidth(self, self._module)
+
+    @property
+    def store_type_width(self):
+        """
+        Returns the maximum number of bytes that may be overwritten by
+        storing the specified type.
+
+        If this is a scalable vector type, the scalable property will be set and
+        the runtime size will be a positive integer multiple of the base size.
+
+        For example, returns 36 for i36 and 80 for x86_fp80. The type passed must
+        have a size (Type::isSized() must return true)."""
+        return ffi.lib.LLVMPY_GetDLStoreTypeBitWidth(self, self._module)
+
+    @property
+    def alloc_type_width(self):
+        """
+        Returns the offset in bytes between successive objects of the
+        specified type, including alignment padding.
+
+        If Ty is a scalable vector type, the scalable property will be set and
+        the runtime size will be a positive integer multiple of the base size.
+
+        This is the amount that alloca reserves for this type. For example,
+        returns 12 or 16 for x86_fp80, depending on alignment.
+        """
+        return ffi.lib.LLVMPY_GetDLAllocTypeBitWidth(self, self._module)
+
+    @property
     def type_kind(self):
         """
         Returns the LLVMTypeKind enumeration of this type.
         """
         return TypeKind(ffi.lib.LLVMPY_GetTypeKind(self))
 
-    @property
-    def is_function_vararg(self):
-        if self.type_kind != TypeKind.function:
-            raise ValueError('expected function, got %s' % self.type_kind)
-        return ffi.lib.LLVMPY_IsFunctionVararg(self)
-
     def __str__(self):
         return ffi.ret_string(ffi.lib.LLVMPY_PrintType(self))
 
 
 class _TypeIterator(ffi.ObjectRef):
+    def __init__(self, obj, module):
+        super().__init__(obj)
+        self._mod = module
 
     def __next__(self):
         vp = self._next()
         if vp:
-            return TypeRef(vp)
+            return TypeRef(vp, self._mod)
         else:
             raise StopIteration
 
@@ -152,7 +190,6 @@ class _TypeIterator(ffi.ObjectRef):
 
 
 class _TypeListIterator(_TypeIterator):
-
     def _dispose(self):
         self._capi.LLVMPY_DisposeElementIter(self)
 
@@ -165,8 +202,8 @@ class _TypeListIterator(_TypeIterator):
 ffi.lib.LLVMPY_PrintType.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_PrintType.restype = c_void_p
 
-#ffi.lib.LLVMPY_GetElementType.argtypes = [ffi.LLVMTypeRef]
-#ffi.lib.LLVMPY_GetElementType.restype = ffi.LLVMTypeRef
+# ffi.lib.LLVMPY_GetElementType.argtypes = [ffi.LLVMTypeRef]
+# ffi.lib.LLVMPY_GetElementType.restype = ffi.LLVMTypeRef
 
 ffi.lib.LLVMPY_TypeIsPointer.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_TypeIsPointer.restype = c_bool
@@ -180,9 +217,6 @@ ffi.lib.LLVMPY_TypeIsVector.restype = c_bool
 ffi.lib.LLVMPY_TypeIsStruct.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_TypeIsStruct.restype = c_bool
 
-ffi.lib.LLVMPY_TypeIsOpaque.argtypes = [ffi.LLVMTypeRef]
-ffi.lib.LLVMPY_TypeIsOpaque.restype = c_bool
-
 ffi.lib.LLVMPY_GetTypeKind.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_GetTypeKind.restype = c_int
 
@@ -192,8 +226,14 @@ ffi.lib.LLVMPY_GetTypeElementCount.restype = c_int
 ffi.lib.LLVMPY_GetTypeBitWidth.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_GetTypeBitWidth.restype = c_uint64
 
-ffi.lib.LLVMPY_IsFunctionVararg.argtypes = [ffi.LLVMTypeRef]
-ffi.lib.LLVMPY_IsFunctionVararg.restype = c_bool
+ffi.lib.LLVMPY_GetDLTypeBitWidth.argtypes = [ffi.LLVMTypeRef, ffi.LLVMModuleRef]
+ffi.lib.LLVMPY_GetDLTypeBitWidth.restype = c_uint64
+
+ffi.lib.LLVMPY_GetDLStoreTypeBitWidth.argtypes = [ffi.LLVMTypeRef, ffi.LLVMModuleRef]
+ffi.lib.LLVMPY_GetDLStoreTypeBitWidth.restype = c_uint64
+
+ffi.lib.LLVMPY_GetDLAllocTypeBitWidth.argtypes = [ffi.LLVMTypeRef, ffi.LLVMModuleRef]
+ffi.lib.LLVMPY_GetDLAllocTypeBitWidth.restype = c_uint64
 
 ffi.lib.LLVMPY_ElementIter.argtypes = [ffi.LLVMTypeRef]
 ffi.lib.LLVMPY_ElementIter.restype = ffi.LLVMElementIterator

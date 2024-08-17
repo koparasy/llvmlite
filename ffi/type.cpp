@@ -1,5 +1,6 @@
 #include "core.h"
 #include "llvm-c/Core.h"
+#include "llvm/IR/Module.h"
 #include <string>
 
 #include <iostream>
@@ -143,6 +144,36 @@ LLVMPY_GetTypeBitWidth(LLVMTypeRef type) {
     llvm::Type *unwrapped = llvm::unwrap(type);
     auto size = unwrapped->getPrimitiveSizeInBits();
     return size.getFixedValue();
+}
+
+API_EXPORT(uint64_t)
+LLVMPY_GetDLTypeBitWidth(LLVMTypeRef type, LLVMModuleRef mod) {
+    llvm::Type *unwrapped = llvm::unwrap(type);
+    llvm::Module *M = llvm::unwrap(mod);
+    auto size = unwrapped->getPrimitiveSizeInBits();
+    llvm::DataLayout dataLayout = M->getDataLayout();
+    uint64_t sizeInBits = dataLayout.getTypeSizeInBits(unwrapped);
+    return sizeInBits;
+}
+
+API_EXPORT(uint64_t)
+LLVMPY_GetDLStoreTypeBitWidth(LLVMTypeRef type, LLVMModuleRef mod) {
+    llvm::Type *unwrapped = llvm::unwrap(type);
+    llvm::Module *M = llvm::unwrap(mod);
+    auto size = unwrapped->getPrimitiveSizeInBits();
+    llvm::DataLayout dataLayout = M->getDataLayout();
+    uint64_t sizeInBits = dataLayout.getTypeStoreSizeInBits(unwrapped);
+    return sizeInBits;
+}
+
+API_EXPORT(uint64_t)
+LLVMPY_GetDLAllocTypeBitWidth(LLVMTypeRef type, LLVMModuleRef mod) {
+    llvm::Type *unwrapped = llvm::unwrap(type);
+    llvm::Module *M = llvm::unwrap(mod);
+    auto size = unwrapped->getPrimitiveSizeInBits();
+    llvm::DataLayout dataLayout = M->getDataLayout();
+    uint64_t sizeInBits = dataLayout.getTypeAllocSize(unwrapped);
+    return sizeInBits;
 }
 
 // API_EXPORT(LLVMTypeRef)
