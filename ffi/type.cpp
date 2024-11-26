@@ -151,9 +151,13 @@ LLVMPY_GetDLTypeBitWidth(LLVMTypeRef type, LLVMModuleRef mod) {
     llvm::Type *unwrapped = llvm::unwrap(type);
     llvm::Module *M = llvm::unwrap(mod);
     auto size = unwrapped->getPrimitiveSizeInBits();
-    llvm::DataLayout dataLayout = M->getDataLayout();
-    uint64_t sizeInBits = dataLayout.getTypeSizeInBits(unwrapped);
-    return sizeInBits;
+    if (unwrapped->isSized()) {
+    	llvm::DataLayout dataLayout = M->getDataLayout();
+    	uint64_t sizeInBits = dataLayout.getTypeSizeInBits(unwrapped);
+    	return sizeInBits;
+    } else {
+	return size.getFixedValue();
+    }
 }
 
 API_EXPORT(uint64_t)
@@ -161,9 +165,13 @@ LLVMPY_GetDLStoreTypeBitWidth(LLVMTypeRef type, LLVMModuleRef mod) {
     llvm::Type *unwrapped = llvm::unwrap(type);
     llvm::Module *M = llvm::unwrap(mod);
     auto size = unwrapped->getPrimitiveSizeInBits();
-    llvm::DataLayout dataLayout = M->getDataLayout();
-    uint64_t sizeInBits = dataLayout.getTypeStoreSizeInBits(unwrapped);
-    return sizeInBits;
+    if (unwrapped->isSized()) {
+    	llvm::DataLayout dataLayout = M->getDataLayout();
+    	uint64_t sizeInBits = dataLayout.getTypeStoreSizeInBits(unwrapped);
+    	return sizeInBits;
+    } else {
+	return size.getFixedValue();
+    }
 }
 
 API_EXPORT(uint64_t)
@@ -171,9 +179,13 @@ LLVMPY_GetDLAllocTypeBitWidth(LLVMTypeRef type, LLVMModuleRef mod) {
     llvm::Type *unwrapped = llvm::unwrap(type);
     llvm::Module *M = llvm::unwrap(mod);
     auto size = unwrapped->getPrimitiveSizeInBits();
-    llvm::DataLayout dataLayout = M->getDataLayout();
-    uint64_t sizeInBits = dataLayout.getTypeAllocSize(unwrapped);
-    return sizeInBits;
+    if (unwrapped->isSized()) {
+    	llvm::DataLayout dataLayout = M->getDataLayout();
+    	uint64_t sizeInBits = dataLayout.getTypeAllocSize(unwrapped);
+    	return sizeInBits;
+    } else {
+	return size.getFixedValue();
+    }
 }
 
 // API_EXPORT(LLVMTypeRef)
