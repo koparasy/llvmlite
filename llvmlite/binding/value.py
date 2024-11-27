@@ -363,6 +363,9 @@ class ValueRef(ffi.ObjectRef):
             ValueKind.global_variable,
             ValueKind.constant_aggregate_zero,
             ValueKind.undef_value,
+            ValueKind.constant_int,
+            ValueKind.constant_fp,
+            ValueKind.constant_pointer_null,
         ):
             raise ValueError(
                 "expected instruction value, constant aggregate, or global."
