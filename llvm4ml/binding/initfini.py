@@ -1,6 +1,6 @@
 from ctypes import c_uint
 
-from llvmlite.binding import ffi
+from llvm4ml.binding import ffi
 
 
 def initialize():

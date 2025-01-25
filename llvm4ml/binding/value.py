@@ -15,10 +15,10 @@ from ctypes import (
 )
 import enum
 
-from llvmlite.binding import ffi
-from llvmlite.binding.common import _decode_string, _encode_string
-from llvmlite.binding.typeref import TypeRef
-from llvmlite.binding.attribute import AttributeRef
+from llvm4ml.binding import ffi
+from llvm4ml.binding.common import _decode_string, _encode_string
+from llvm4ml.binding.typeref import TypeRef
+from llvm4ml.binding.attribute import AttributeRef
 
 
 class Linkage(enum.IntEnum):

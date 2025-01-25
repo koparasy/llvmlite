@@ -1,7 +1,7 @@
 from ctypes import c_int, c_bool, c_void_p, c_uint64
 import enum
 
-from llvmlite.binding import ffi
+from llvm4ml.binding import ffi
 
 
 class TypeKind(enum.IntEnum):

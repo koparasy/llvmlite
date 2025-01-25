@@ -1,5 +1,5 @@
-from llvmlite.binding import ffi
-from llvmlite.binding.common import _encode_string
+from llvm4ml.binding import ffi
+from llvm4ml.binding.common import _encode_string
 from ctypes import c_char_p
 
 

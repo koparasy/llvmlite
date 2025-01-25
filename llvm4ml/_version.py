@@ -14,8 +14,8 @@ git_full = "$Format:%H$"
 
 # these strings are filled in when 'setup.py versioneer' creates _version.py
 tag_prefix = "v"
-parentdir_prefix = "llvmlite-"
-versionfile_source = "llvmlite/_version.py"
+parentdir_prefix = "llvm4ml-"
+versionfile_source = "llvm4ml/_version.py"
 
 import os, sys, re, subprocess, errno
 

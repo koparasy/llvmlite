@@ -7,16 +7,16 @@ import sys
 
 def get_library_name():
     """
-    Return the name of the llvmlite shared library file.
+    Return the name of the llvm4ml shared library file.
     """
     if os.name == 'posix':
         if sys.platform == 'darwin':
-            return 'libllvmlite.dylib'
+            return 'libllvm4ml.dylib'
         else:
-            return 'libllvmlite.so'
+            return 'libllvm4ml.so'
     else:
         assert os.name == 'nt'
-        return 'llvmlite.dll'
+        return 'llvm4ml.dll'
 
 
 def get_library_files():

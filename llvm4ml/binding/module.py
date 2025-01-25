@@ -1,9 +1,9 @@
 from ctypes import c_char_p, byref, POINTER, c_bool, create_string_buffer, c_size_t, string_at
 
-from llvmlite.binding import ffi
-from llvmlite.binding.common import _decode_string, _encode_string
-from llvmlite.binding.value import ValueRef, TypeRef
-from llvmlite.binding.context import get_global_context
+from llvm4ml.binding import ffi
+from llvm4ml.binding.common import _decode_string, _encode_string
+from llvm4ml.binding.value import ValueRef, TypeRef
+from llvm4ml.binding.context import get_global_context
 
 
 def parse_assembly(llvmir, context=None):

@@ -1,6 +1,6 @@
 from ctypes import c_uint, c_bool
-from llvmlite.binding import ffi
-from llvmlite.binding import passmanagers
+from llvm4ml.binding import ffi
+from llvm4ml.binding import passmanagers
 
 
 def create_pass_manager_builder():
