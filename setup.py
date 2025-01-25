@@ -50,10 +50,10 @@ if os.environ.get("READTHEDOCS", None) == "True":
 import versioneer
 
 versioneer.VCS = "git"
-versioneer.versionfile_source = "llvmlite/_version.py"
-versioneer.versionfile_build = "llvmlite/_version.py"
+versioneer.versionfile_source = "llvm4ml/_version.py"
+versioneer.versionfile_build = "llvm4ml/_version.py"
 versioneer.tag_prefix = "v"  # tags are like v1.2.0
-versioneer.parentdir_prefix = "llvmlite-"  # dirname like 'myproject-1.2.0'
+versioneer.parentdir_prefix = "llvm4ml-"  # dirname like 'myproject-1.2.0'
 
 
 here_dir = os.path.dirname(os.path.abspath(__file__))
@@ -72,7 +72,7 @@ def build_library_files(dry_run):
     spawn(cmd, dry_run=dry_run)
 
 
-class LlvmliteBuild(build):
+class llvm4mlBuild(build):
     def finalize_options(self):
         build.finalize_options(self)
         # The build isn't platform-independent
@@ -88,27 +88,27 @@ class LlvmliteBuild(build):
         return ["build_ext"] + commands
 
 
-class LlvmliteBuildExt(build_ext):
+class llvm4mlBuildExt(build_ext):
     def run(self):
         build_ext.run(self)
         build_library_files(self.dry_run)
         # HACK: this makes sure the library file (which is large) is only
         # included in binary builds, not source builds.
-        from llvmlite.utils import get_library_files
+        from llvm4ml.utils import get_library_files
 
         self.distribution.package_data = {
-            "llvmlite.binding": get_library_files(),
+            "llvm4ml.binding": get_library_files(),
         }
 
 
-class LlvmliteInstall(install):
-    # Ensure install see the libllvmlite shared library
+class llvm4mlInstall(install):
+    # Ensure install see the libllvm4ml shared library
     # This seems to only be necessary on OSX.
     def run(self):
-        from llvmlite.utils import get_library_files
+        from llvm4ml.utils import get_library_files
 
         self.distribution.package_data = {
-            "llvmlite.binding": get_library_files(),
+            "llvm4ml.binding": get_library_files(),
         }
         install.run(self)
 
@@ -120,12 +120,12 @@ class LlvmliteInstall(install):
         self.install_lib = self.install_platlib
 
 
-class LlvmliteClean(clean):
+class llvm4mlClean(clean):
     """Custom clean command to tidy up the project root."""
 
     def run(self):
         clean.run(self)
-        path = os.path.join(here_dir, "llvmlite.egg-info")
+        path = os.path.join(here_dir, "llvm4ml.egg-info")
         if os.path.isdir(path):
             remove_tree(path, dry_run=self.dry_run)
         if not self.dry_run:
@@ -152,15 +152,15 @@ class LlvmliteClean(clean):
 
 if bdist_wheel:
 
-    class LLvmliteBDistWheel(bdist_wheel):
+    class llvm4mlBDistWheel(bdist_wheel):
         def run(self):
             # Ensure the binding file exist when running wheel build
-            from llvmlite.utils import get_library_files
+            from llvm4ml.utils import get_library_files
 
             build_library_files(self.dry_run)
             self.distribution.package_data.update(
                 {
-                    "llvmlite.binding": get_library_files(),
+                    "llvm4ml.binding": get_library_files(),
                 }
             )
             # Run wheel build command
@@ -174,27 +174,25 @@ if bdist_wheel:
 
 cmdclass.update(
     {
-        "build": LlvmliteBuild,
-        "build_ext": LlvmliteBuildExt,
-        "install": LlvmliteInstall,
-        "clean": LlvmliteClean,
+        "build": llvm4mlBuild,
+        "build_ext": llvm4mlBuildExt,
+        "install": llvm4mlInstall,
+        "clean": llvm4mlClean,
     }
 )
 
 if bdist_wheel:
-    cmdclass.update({"bdist_wheel": LLvmliteBDistWheel})
+    cmdclass.update({"bdist_wheel": llvm4mlBDistWheel})
 
 # A stub C-extension to make bdist_wheel build an arch dependent build
 ext_stub = Extension(
-    name="llvmlite.binding._stub", sources=["llvmlite/binding/_stub.c"]
+    name="llvm4ml.binding._stub", sources=["llvm4ml/binding/_stub.c"]
 )
 
 
 packages = [
-    "llvmlite",
-    "llvmlite.binding",
-    "llvmlite.ir",
-    "llvmlite.tests",
+    "llvm4ml",
+    "llvm4ml.binding",
 ]
 
 
@@ -203,7 +201,7 @@ with open("README.rst") as f:
 
 
 setup(
-    name="llvmlite",
+    name="llvm4ml",
     description="lightweight wrapper around basic LLVM functionality",
     version=versioneer.get_version(),
     classifiers=[
@@ -220,9 +218,9 @@ setup(
         "Topic :: Software Development :: Compilers",
     ],
     # Include the separately-compiled shared library
-    url="http://llvmlite.readthedocs.io",
+    url="http://llvm4ml.readthedocs.io",
     project_urls={
-        "Source": "https://github.com/numba/llvmlite",
+        "Source": "https://github.com/numba/llvm4ml",
     },
     packages=packages,
     ext_modules=[],

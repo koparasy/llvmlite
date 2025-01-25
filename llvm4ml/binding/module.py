@@ -1,7 +1,6 @@
 from ctypes import c_char_p, byref, POINTER, c_bool, create_string_buffer, c_size_t, string_at
 
 from llvmlite.binding import ffi
-from llvmlite.binding.linker import link_modules
 from llvmlite.binding.common import _decode_string, _encode_string
 from llvmlite.binding.value import ValueRef, TypeRef
 from llvmlite.binding.context import get_global_context
@@ -154,15 +153,6 @@ class ModuleRef(ffi.ObjectRef):
     @triple.setter
     def triple(self, strrep):
         ffi.lib.LLVMPY_SetTarget(self, create_string_buffer(strrep.encode("utf8")))
-
-    def link_in(self, other, preserve=False):
-        """
-        Link the *other* module into this one.  The *other* module will
-        be destroyed unless *preserve* is true.
-        """
-        if preserve:
-            other = other.clone()
-        link_modules(self, other)
 
     @property
     def global_variables(self):

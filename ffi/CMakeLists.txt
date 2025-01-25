@@ -20,8 +20,8 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 # E.g. if using the C++ header files
 # you will need to enable C++11 support
 # for your compiler.
-
-include_directories(${LLVM_INCLUDE_DIRS})
+message("Status LLVM Include directories are ${LLVM_INCLUDE_DIRS}")
+include_directories(BEFORE ${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
 # Look for SVML
@@ -37,10 +37,9 @@ endif()
 
 
 # Define our shared library
-add_library(llvmlite SHARED assembly.cpp bitcode.cpp core.cpp initfini.cpp
-            module.cpp value.cpp executionengine.cpp transforms.cpp type.cpp
-            passmanagers.cpp targets.cpp dylib.cpp linker.cpp object_file.cpp
-            custom_passes.cpp orcjit.cpp)
+add_library(llvm4ml SHARED assembly.cpp bitcode.cpp core.cpp initfini.cpp
+            module.cpp value.cpp executionengine.cpp type.cpp attribute.cpp
+            targets.cpp  custom_passes.cpp )
 
 # Find the libraries that correspond to the LLVM components
 # that we wish to use.
@@ -60,13 +59,13 @@ endif()
 list(REMOVE_ITEM llvm_libs "OptRemarks")
 
 # Link against LLVM libraries
-target_link_libraries(llvmlite ${llvm_libs})
+target_link_libraries(llvm4ml ${llvm_libs})
 # -flto and --exclude-libs allow us to remove those parts of LLVM we don't use
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    set_property(TARGET llvmlite APPEND_STRING PROPERTY LINK_FLAGS "-flto -Wl,--exclude-libs,ALL")
+    set_property(TARGET llvm4ml APPEND_STRING PROPERTY LINK_FLAGS "-flto -Wl,--exclude-libs,ALL")
 # On Darwin we only include the LLVMPY symbols we require and exclude
 # everything else.
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(LLVM_EXPORTED_SYMBOLS "-Wl,-exported_symbol,_LLVMPY_*")
-    set_property(TARGET llvmlite APPEND_STRING PROPERTY LINK_FLAGS "${LLVM_EXPORTED_SYMBOLS}")
+    set_property(TARGET llvm4ml APPEND_STRING PROPERTY LINK_FLAGS "${LLVM_EXPORTED_SYMBOLS}")
 endif()

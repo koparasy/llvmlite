@@ -1,5 +1,4 @@
 #include "llvm-c/Core.h"
-#include "llvm-c/Initialization.h"
 #include "llvm-c/Target.h"
 
 #include "core.h"
@@ -12,18 +11,18 @@ extern "C" {
         LLVMInitialize##F(LLVMGetGlobalPassRegistry());                        \
     }
 
-INIT(Core)
-INIT(TransformUtils)
-INIT(ScalarOpts)
-//INIT(ObjCARCOpts)
-INIT(Vectorization)
-INIT(InstCombine)
-INIT(IPO)
-// INIT(Instrumentation)
-INIT(Analysis)
-INIT(IPA)
-INIT(CodeGen)
-INIT(Target)
+// INIT(Core)
+// INIT(TransformUtils)
+// INIT(ScalarOpts)
+//// INIT(ObjCARCOpts)
+// INIT(Vectorization)
+// INIT(InstCombine)
+// INIT(IPO)
+//// INIT(Instrumentation)
+// INIT(Analysis)
+// INIT(IPA)
+// INIT(CodeGen)
+// INIT(Target)
 
 #undef INIT
 

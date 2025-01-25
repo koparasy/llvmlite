@@ -17,7 +17,7 @@ import tempfile
 
 here_dir = os.path.abspath(os.path.dirname(__file__))
 build_dir = os.path.join(here_dir, 'build')
-target_dir = os.path.join(os.path.dirname(here_dir), 'llvmlite', 'binding')
+target_dir = os.path.join(os.path.dirname(here_dir), 'llvm4ml', 'binding')
 
 is_64bit = sys.maxsize >= 2**32
 
@@ -29,10 +29,12 @@ def try_cmake(cmake_dir, build_dir, generator, arch=None, toolkit=None):
         args += ['-A', arch]
     if toolkit is not None:
         args += ['-T', toolkit]
+    args +=["-DCMAKE_EXPORT_COMPILE_COMMANDS=On"]
     args.append(cmake_dir)
     try:
         os.chdir(build_dir)
         print('Running:', ' '.join(args))
+        print("Current directory is ", os.getcwd())
         subprocess.check_call(args)
     finally:
         os.chdir(old_dir)
@@ -99,7 +101,7 @@ def main_windows():
         os.mkdir(build_dir)
     # Run configuration step
     try_cmake(here_dir, build_dir, *generator)
-    subprocess.check_call(['cmake', '--build', build_dir, '--config', config])
+    subprocess.check_call(['cmake', '--build', build_dir, '--config', config, "-- VERBOSE=1"])
     shutil.copy(os.path.join(build_dir, config, 'llvmlite.dll'), target_dir)
 
 
@@ -110,7 +112,7 @@ def main_posix_cmake(kind, library_ext):
         os.mkdir(build_dir)
     try_cmake(here_dir, build_dir, generator)
     subprocess.check_call(['cmake', '--build', build_dir, '--config', config])
-    shutil.copy(os.path.join(build_dir, 'libllvmlite' + library_ext), target_dir)
+    shutil.copy(os.path.join(build_dir, 'libllvm4ml' + library_ext), target_dir)
 
 def main_posix(kind, library_ext):
     if os.environ.get("LLVMLITE_USE_CMAKE", "0") == "1":
