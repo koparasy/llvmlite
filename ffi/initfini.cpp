@@ -1,8 +1,9 @@
+#include "core.h"
 #include "llvm-c/Core.h"
 #include "llvm-c/Target.h"
-
-#include "core.h"
 #include "llvm/Config/llvm-config.h"
+#include "llvm/Support/InitLLVM.h"
+#include "llvm/Support/TargetSelect.h"
 
 extern "C" {
 
@@ -11,7 +12,17 @@ extern "C" {
         LLVMInitialize##F(LLVMGetGlobalPassRegistry());                        \
     }
 
-// INIT(Core)
+static const char *Args[] = {"llvm4ml"};
+static int NumArgs = 4;
+
+API_EXPORT(void) LLVMPY_Initialize() {
+    const char **ArgsPtr = Args;
+    llvm::InitLLVM X(NumArgs, ArgsPtr);
+    llvm::InitializeNativeTarget();
+    llvm::InitializeNativeTargetAsmPrinter();
+    llvm::InitializeNativeTargetAsmParser();
+}
+
 // INIT(TransformUtils)
 // INIT(ScalarOpts)
 //// INIT(ObjCARCOpts)
