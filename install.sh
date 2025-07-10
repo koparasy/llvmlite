@@ -9,6 +9,6 @@ config=llvm-config
 export LLVM_CONFIG=$config
 export LLVMLITE_USE_CMAKE=1
 #python3 setup.py clean
-CC=clang CXX=clang++ python3 -m pip install --verbose -e ./
+CXXFLAGS="-fno-lto" CC=clang CXX=clang++ python3 -m pip install --verbose ./
 #python3 setup.py build --force --verbose
 #EXTRA_LLVM_LIBS="-fno-lto" LLVM_CONFIG=$config python3 setup.py --verbose install

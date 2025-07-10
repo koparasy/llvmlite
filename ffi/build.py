@@ -30,6 +30,8 @@ def try_cmake(cmake_dir, build_dir, generator, arch=None, toolkit=None):
     if toolkit is not None:
         args += ['-T', toolkit]
     args +=["-DCMAKE_EXPORT_COMPILE_COMMANDS=On"]
+    args +=["-DLLVM_USE_LINKER=lld"]
+    args +=["-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF"]
     args.append(cmake_dir)
     try:
         os.chdir(build_dir)
